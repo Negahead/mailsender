@@ -5,6 +5,7 @@ except ImportError:
 
 
 from datetime import datetime
+import calendar
 import re
 import os
 
@@ -38,6 +39,19 @@ class MailSender:
                 return self.__getattribute__(item)
             except AttributeError:
                 return None
+
+    @staticmethod
+    def to_utc_timestamp(year, month, day, hour=0, minute=0, second=0):
+        try:
+            c = calendar.timegm((year, month, day, hour, minute, second))
+            return c-8*3600
+        except (SyntaxError, ValueError, TypeError):
+            return None
+
+    @staticmethod
+    def from_utf_timestamp(timestamp):
+        s = datetime.utcfromtimestamp(timestamp+8*3600)
+        return s.strftime('%Y-%m-%d %H:%M:%S')
 
     def set_delivery_time(self, year, month, day, hour, minute, second, tz):
         try:
@@ -106,10 +120,9 @@ class MailSender:
                     self.mail_to = mail_to.strip()
                     self.send_email()
             except (FileNotFoundError, IOError, OSError):
-                if isinstance(receiver, (str, list)):
-                    self.mail_to = receiver
-                else:
-                    raise TypeError("{0} is of wrong format,expect a file-like object,or a string,or a list".format(receiver))
+                pass
+        if isinstance(receiver, (str, list)):
+            self.mail_to = receiver
 
     def set_html_content(self, html_content):
         """
@@ -136,14 +149,18 @@ class MailSender:
 
 
 if __name__ == '__main__':
-    m = MailSender(
-        domain='sandbox2f00e5e832a748ff80d76b2a13aaa5d8.mailgun.org',
-        auth_key='key-9f939581473944b38338d87cdb47c147',
-        mail_from="postmaster@sandbox2f00e5e832a748ff80d76b2a13aaa5d8.mailgub.org")
-    m.set_receiver("will <1097503158@qq.com>")
-    m.set_subject("sssssssssssssssssssssssssssubject")
-    m.set_html_content(open("C:\\Users\\zhangxiangqi\\Desktop\\gongshang\\html.txt", "rb"))
-    m['o:tag'] = ["tag"]
+    # m = MailSender(
+    #     domain='sandbox2f00e5e832a748ff80d76b2a13aaa5d8.mailgun.org',
+    #     auth_key='key-9f939581473944b38338d87cdb47c147',
+    #     mail_from="buyInt <postmaster@sandbox2f00e5e832a748ff80d76b2a13aaa5d8.mailgub.org>")
+    m=MailSender(domain='mergerhunt.com', auth_key='key-d7e1699d16d39be46f3478cba69375d9',
+                 mail_from='mailgun@mergerhunt.com')
+    m.set_receiver("zhangxiangqi@mergersmatch.com")
+    # m.set_subject("sssssssssssssssssssssssssssubject")
+    # m.set_html_content(open("C:\\Users\\zhangxiangqi\\Desktop\\gongshang\\html.txt", "rb"))
+    m.set_html_content("""{"client-info": {}, "event": "delivered", "geolocation": {}, "ip": "", "recipient": "1097503158@qq.com", "recipient-domain": "qq.com", "timestamp": "2018-04-18 15:08:58", "tags": ["tag"]}
+""")
+    m['o:tag'] = ["tag1111111111111111"]
     m['o:tracking-opens'] = True
     m['o:tracking-clicks'] = True
     m.send_email()
